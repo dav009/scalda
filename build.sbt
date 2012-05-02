@@ -13,7 +13,7 @@ mainClass in assembly := Some("edu.ucla.sspace.OnlineTopicModel")
 resolvers += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository"
 
 
-libraryDependencies += "org.scalala" %% "scalala" % "1.0.0.RC2"
+libraryDependencies += "org.scalala" %% "scalala" % "1.0.0.RC3-SNAPSHOT"
 
 libraryDependencies += "org.scalanlp" %% "scalanlp-learn" % "0.4.RC1"
 
