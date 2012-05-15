@@ -1,8 +1,7 @@
-package edu.ucla.sspace.learner
+package edu.ucla.sspace.graphical
 
-import scalala.tensor.sparse.SparseVectorRow
+import scalala.tensor.mutable.VectorRow
 
 trait Learner {
-   def train(data: List[SparseVectorRow[Double]],
-             numGroups: Int) : Array[Int]
+   def train(data: List[VectorRow[Double]], numGroups: Int) : Array[Int]
 }

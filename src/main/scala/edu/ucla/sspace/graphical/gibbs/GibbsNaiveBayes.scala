@@ -1,11 +1,11 @@
-package edu.ucla.sspace.learner.gibbs
+package edu.ucla.sspace.graphical.gibbs
 
-import edu.ucla.sspace.learner.Learner
+import edu.ucla.sspace.graphical.Learner
 
 import scalala.library.Library._
 import scalala.tensor.dense.DenseVectorRow
 import scalala.tensor.dense.DenseVectorRow
-import scalala.tensor.sparse.SparseVectorRow
+import scalala.tensor.mutable.VectorRow
 
 import scalanlp.stats.distributions.Beta
 import scalanlp.stats.distributions.Dirichlet
@@ -18,7 +18,7 @@ class GibbsNaiveBayes(val numIterations: Int,
 
     val pi_dist = new Dirichlet(gamma_pi)
 
-    def train(data: List[SparseVectorRow[Double]], 
+    def train(data: List[VectorRow[Double]], 
               k: Int) = {
         val v = data(0).length
         val n = data.size
@@ -34,6 +34,7 @@ class GibbsNaiveBayes(val numIterations: Int,
             case (x_j, j) => {labelStats(j) += x_j; labelCounts(j) += 1} }
 
         for (i <- 0 until numIterations) {
+            printf("Iteration [%d]\n", i)
             for ( (x_j, j) <- data.zipWithIndex ) {
                 val label = labels(j)
                 labelStats(label) -= x_j
