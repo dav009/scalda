@@ -22,4 +22,6 @@ object Util {
         abs(sigma.iterator.product) 
 
     def norm(v: DenseVectorRow[Double]) = v / v.sum
+
+    def unit(v: DenseVectorRow[Double]) = v / v.norm(2)
 }

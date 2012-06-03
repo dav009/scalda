@@ -21,4 +21,6 @@ libraryDependencies += "edu.ucla.sspace" % "sspace-wordsi" % "2.0"
 
 libraryDependencies += "com.googlecode.netlib-java" % "netlib-java" % "0.9.3"
 
+libraryDependencies += "org.apache.commons" % "commons-math3" % "3.0"
+
 scalacOptions += "-deprecation"

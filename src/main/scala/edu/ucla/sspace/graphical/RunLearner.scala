@@ -1,7 +1,5 @@
 package edu.ucla.sspace.graphical
 
-import edu.ucla.sspace.graphical.gibbs.{GibbsNaiveBayes,FiniteGaussianMixtureModel}
-
 import scalala.tensor.dense.DenseVector
 
 import scala.io.Source
@@ -20,24 +18,29 @@ object RunLearner {
                 DenseVector[Double](line.split("\\s+").map(_.toDouble)).t
         ).toList
 
-        val nTrials = 200
+        val nTrials = 300
         val k = args(2).toInt
+        val reportSet = Set(0, 1, 10, 100, nTrials)
         val learner = args(0) match {
-            case "nb" => new GibbsNaiveBayes(
+            case "nb" => new gibbs.GibbsNaiveBayes(
                 nTrials, 
                 DenseVector[Double](Array.fill(k)(1d))t,
-                DenseVector[Double](Array.fill(2)(1d)).t)
-            case "gmm" => new FiniteGaussianMixtureModel(nTrials, 5)
-            case "km" => new FiniteGaussianMixtureModel(nTrials, 1, true)
-            case "vdpmm" => new varbayes.DirichletProcessMixtureModel(nTrials, 1)
-            case "gdpmm" => new gibbs.DirichletProcessMixtureModel(nTrials, 1)
+                DenseVector[Double](Array.fill(2)(1d)).t,
+                reportSet)
+            case "immm" => new gibbs.InfiniteMultinomialMixtureModel(nTrials, 1, 1, reportSet)
+            case "gmm" => new gibbs.FiniteGaussianMixtureModel(nTrials, 5, reportSet)
+            case "km" => new gibbs.FiniteGaussianMixtureModel(nTrials, 1, reportSet, true)
+            case "gdpmm" => new gibbs.DirichletProcessMixtureModel(nTrials, 1, reportSet)
+            case "dpvmf" => new gibbs.InfiniteVonMisesFisherMixtureModel(nTrials, 1d, reportSet)
+            case "vmf" => new em.FiniteMixtureVonMisesFisher(nTrials, reportSet)
         }
 
-        val assignments = learner.train(data.toList, k)
+        def reporter() = data.map( x_j => "%f %f".format(x_j(0), x_j(1)) )
         val w = new PrintWriter(args(3))
-        w.println("X Y Group")
-        for ( (d, l) <- data.zip(assignments))
-            w.println("%f %f %d".format(d(0), d(1), l))
+        learner.setReporter(w, reporter)
+
+        w.println("X Y Iteration Group")
+        val assignments = learner.train(data.toList, k)
         w.close
     }
 }

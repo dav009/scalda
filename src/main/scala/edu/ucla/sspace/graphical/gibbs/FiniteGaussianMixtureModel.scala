@@ -15,6 +15,7 @@ import scala.math.Pi
 
 class FiniteGaussianMixtureModel(val numIterations: Int, 
                                  val alpha: Double,
+                                 s: Set[Int] = Set[Int](),
                                  val useKMeans: Boolean = false) extends Learner {
 
     def train(data: List[VectorRow[Double]], k: Int) = {
@@ -24,6 +25,9 @@ class FiniteGaussianMixtureModel(val numIterations: Int,
 
         // Assign random labels to all points.
         val labels = new Multinomial(Array.fill(k)(1d/k)).sample(n).toArray
+
+        if (s contains 0)
+            report(0, labels.toList)
 
         // Compute the global mean of all data points.
         val mu_1 = data.reduce(_+_).toDense / n
@@ -50,8 +54,6 @@ class FiniteGaussianMixtureModel(val numIterations: Int,
                 // the count for the component.
                 val l_j = labels(j)
                 if (i != 0) {
-                    sigmas(l_j) -= (mus(l_j)/counts(l_j) - x_j) :^ 2
-                    mus(l_j) -= x_j
                     counts(l_j) -= 1
                 }
 
@@ -61,25 +63,22 @@ class FiniteGaussianMixtureModel(val numIterations: Int,
                 // Compute the probability of the data point given each
                 // component using the sufficient statistics.
                 val posterior = new DenseVectorRow[Double](
-                    (counts.data, mus, sigmas).zipped.toList.map {
-                        case (n_c, mu_c, sigma_c) => 
-                            if (n_c < 1d) 0d
-                            else gaussian(x_j, mu_c/n_c, sigma_c/n_c) }.toArray) + epsilon
+                    (mus, sigmas).zipped.toList.map {
+                        case (mu_c, sigma_c) => gaussian(x_j, mu_c, sigma_c) }.toArray) + epsilon
 
                 val probs = norm(prior :* posterior)
 
                 // Combine the two probabilities into a single distribution and
                 // select a new label for the data point.  Record this in the
                 // label array.
-                labels(j) = if (useKMeans) probs.argmax
-                            else new Multinomial(probs).sample
+                val l_j_new = if (useKMeans) probs.argmax
+                              else new Multinomial(probs).sample
 
+                labels(j) = l_j_new
                 if (i != 0) {
                     // Restore the bookeeping information for this point using the
                     // old assignment.
-                    counts(l_j) += 1
-                    mus(l_j) += x_j
-                    sigmas(l_j) += (mus(l_j)/counts(l_j) - x_j) :^ 2
+                    counts(l_j_new) += 1
                 }
             }
 
@@ -91,10 +90,13 @@ class FiniteGaussianMixtureModel(val numIterations: Int,
             labels.zip(data).groupBy(_._1)
                             .map{ case(k,v) => (k, v.map(_._2)) }
                             .foreach{ case(c, x) => {
-                mus(c) = x.reduce(_+_).toDense
                 counts(c) = x.size
-                sigmas(c) = x.map(x_j => (mus(c)/counts(c) - x_j) :^2).reduce(_+_) + epsilon
+                mus(c) = x.reduce(_+_).toDense / counts(c)
+                sigmas(c) = x.map(x_j => (mus(c)- x_j) :^2).reduce(_+_)/counts(c) + epsilon
             }}
+
+            if (s contains (i+1))
+                report(i+1, labels.toList)
         }
 
         // Return the labels.

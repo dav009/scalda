@@ -1,8 +1,5 @@
 package edu.ucla.sspace.graphical
 
-import edu.ucla.sspace.graphical.gibbs.{GibbsNaiveBayes,FiniteGaussianMixtureModel}
-import edu.ucla.sspace.graphical.varbayes.DirichletProcessMixtureModel
-
 import scalala.tensor.dense.DenseVectorRow
 
 import scala.io.Source
@@ -10,7 +7,7 @@ import scala.io.Source
 import java.io.PrintWriter
 
 
-object RunMcDonalds {
+object RunSpam {
     def main(args:Array[String]) {
         if (args.size != 4) {
             printf("usage: RunMcDonalds <learnerType> <data.mat> <numClusters> <outFile>\n")
@@ -18,31 +15,33 @@ object RunMcDonalds {
         }
 
         val menu = Source.fromFile(args(1)).getLines.map( line => {
-                val d = line.split("\\|")
-                val c = d(2).toDouble + 0.00000011
-                val v = new DenseVectorRow[Double](d.view(3, d.size).map(v => if (v == "N/A") 0d else v.toDouble/c).toArray)
-                (d(0).replaceAll("\\s+", "_"), d(1).replaceAll("\\s+", "_"), v)
+                val d = line.split(",")
+               val v = DenseVectorRow[Double](d.view(0, d.size-4)
+                                                .map(_.toDouble)
+                                                .toArray)
+                (d(d.size-1), v)
         }).toList
 
         val nTrials = 100
         val k = args(2).toInt
-        val v = menu(0)._3.length
+        val v = menu(0)._2.length
         val learner = args(0) match {
-            case "nb" => new GibbsNaiveBayes(
+            case "nb" => new gibbs.GibbsNaiveBayes(
                 nTrials, 
                 new DenseVectorRow[Double](Array.fill(k)(1d)),
                 new DenseVectorRow[Double](Array.fill(v)(1d)))
-            case "gmm" => new FiniteGaussianMixtureModel(nTrials, 1)
-            case "km" => new FiniteGaussianMixtureModel(nTrials, 1, useKMeans = true)
+            case "immm" => new gibbs.InfiniteMultinomialMixtureModel(nTrials, 1, 1)
+            case "gmm" => new gibbs.FiniteGaussianMixtureModel(nTrials, 1)
+            case "km" => new gibbs.FiniteGaussianMixtureModel(nTrials, 1, useKMeans = true)
             case "vdpmm" => new varbayes.DirichletProcessMixtureModel(nTrials, 1)
             case "gdpmm" => new gibbs.DirichletProcessMixtureModel(nTrials, 1)
         }
 
-        val assignments = learner.train(menu.map(_._3), k)
+        val assignments = learner.train(menu.map(_._2), k)
         val w = new PrintWriter(args(3))
-        w.println("Category Item Group")
+        w.println("Spam Group")
         for ( (d, l) <- menu.zip(assignments))
-            w.println("%s %s %d".format(d._1, d._2, l))
+            w.println("%s %d".format(d._1, l))
         w.close
     }
 }

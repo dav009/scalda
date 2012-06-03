@@ -1,4 +1,4 @@
-package edu.ucla.sspace.learner
+package edu.ucla.sspace.graphical
 
 import edu.ucla.sspace.learner.online.OnlineLDA
 

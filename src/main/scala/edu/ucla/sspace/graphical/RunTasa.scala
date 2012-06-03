@@ -36,7 +36,7 @@ object RunTasa {
                 DenseVector[Double](Array.fill(k)(1d)).t,
                 DenseVector[Double](Array.fill(2)(1d)).t)
             case "gmm" => new FiniteGaussianMixtureModel(nTrials, 5)
-            case "km" => new FiniteGaussianMixtureModel(nTrials, 1, true)
+            case "km" => new FiniteGaussianMixtureModel(nTrials, 1, useKMeans=true)
             case "vdpmm" => new varbayes.DirichletProcessMixtureModel(nTrials, 1)
             case "gdpmm" => new gibbs.DirichletProcessMixtureModel(nTrials, 1)
         }

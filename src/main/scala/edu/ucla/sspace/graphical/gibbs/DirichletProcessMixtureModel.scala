@@ -6,19 +6,20 @@ import edu.ucla.sspace.graphical.Util.{norm,epsilon}
 
 import scalala.library.Library._
 import scalala.tensor.dense.DenseVectorRow
-import scalala.tensor.dense.DenseVectorRow
 import scalala.tensor.mutable.VectorRow
-import scalala.tensor.sparse.SparseVectorRow
 
+import scalanlp.stats.distributions.Gamma
 import scalanlp.stats.distributions.Multinomial
-
-import scala.math.Pi
-import scala.util.Random
 
 
 class DirichletProcessMixtureModel(val numIterations: Int, 
-                                   val alpha: Double) extends Learner {
+                                   val alpha: Double,
+                                   s: Set[Int] = Set[Int]()) extends Learner {
+    type Theta = (Double, DenseVectorRow[Double], DenseVectorRow[Double])
+
     val alpha_vec = DenseVectorRow(alpha)
+    val beta = 1d
+    val gamma = 1d
 
     def train(data: List[VectorRow[Double]], ignored: Int) = {
         // Extract the shape of the data.
@@ -27,74 +28,73 @@ class DirichletProcessMixtureModel(val numIterations: Int,
         val t = n - 1 + alpha
 
         // Compute the global mean of all data points.
-        val mu_1 = data.reduce(_+_).toDense / n
+        val mu_0 = data.reduce(_+_).toDense / n
         // Compute the variance of all data points to the global mean.
-        val variance_1 = (data.map(x_j => (mu_1 - x_j) :^ 2).reduce(_+_) / n) + epsilon
-        // Compute the standard deviation to the global mean.
-        val sigma_1 = variance_1 :^ 0.5
+        val variance_0 = (data.map(x_j => (mu_0 - x_j) :^ 2).reduce(_+_) / n) + epsilon
+        val rho_0 = variance_0.map(1/_)
+        val sigma_prime = DenseVectorRow.ones[Double](v)
 
-        var k = 1
+        def newTheta(x:List[VectorRow[Double]],
+                     sigma_old: DenseVectorRow[Double] = sigma_prime) =
+             sampleTheta(mu_0 :* rho_0, rho_0, sigma_old, x)
 
-        // Sample from a standard normal distribution to create initial means
-        // for each component.  These components also have a standard variance.
-        var mus = Array.fill(k)(DenseVectorRow.randn(v) :* sigma_1 :+ mu_1).toBuffer
-        var sigmas = Array.fill(k)(DenseVectorRow.ones[Double](v)).toBuffer
+        // Create the global component that will be used to determine when a 
+        // new component should be sampled.
+        //val components = Array((alpha, mu_0, variance_0)).toBuffer
+        val components = Array((alpha, mu_0, variance_0)).toBuffer
 
-        // Compute the number of assignments to each component and the summation
-        // vector for each component.
-        // Assign random labels to all points.
+        // Setup the initial labels for all the data points.  These start off 
+        // with no meaningful value.
         var labels = Array.fill(n)(0)
-        var counts = DenseVectorRow.zeros[Double](k)
-        counts(0) = 1
+
+        if (s contains 0)
+            report(0, labels.toList)
 
         for (i <- 0 until numIterations) {
-            printf("Starting iteration [%d] with [%d] components,\n", i, k)
+            printf("Starting iteration [%d] with [%d] components,\n", i, components.size-1)
             for ( (x_j, j) <- data.zipWithIndex ) {
+                // Setup a helper function to compute the likelihood for point x.
+                def likelihood(theta: Theta) = gaussian(x_j, theta._2, theta._3)
+
                 val l_j = labels(j)
 
                 // Undo the assignment for the existing point.  This involes
                 // first removing the information from the variance vectors,
                 // then removing it from the center vector, then finally undoing
-                // the count for the component.
-                if (i != 0) {
-                    sigmas(l_j) -= (mus(l_j)/counts(l_j) - x_j) :^ 2
-                    mus(l_j) -= x_j
-                    counts(l_j) -= 1
-                }
+                // the count for the component.  Save the original component 
+                // data so we can restore it quickly later on.
+                val oldComponent:Theta = if (i != 0) {
+                    val (n_lj, mu, sigma) = components(l_j)
+                    components(l_j) = (n_lj-1, mu, sigma)
+                    (n_lj, mu, sigma)
+                } else null
 
                 // Compute the probability of selecting each component based on
                 // their sizes.
-                val prior = DenseVectorRow.horzcat(counts, alpha_vec) / t
+                val prior = DenseVectorRow[Double](components.map(_._1 / t).toArray)
                 // Compute the probability of the data point given each
                 // component using the sufficient statistics.
-                val posterior = DenseVectorRow[Double](
-                    ((counts.data, mus, sigmas).zipped.toList.map {
-                        case (n_c, mu_c, sigma_c) => 
-                            if (n_c < 1d) 0.0
-                            else gaussian(x_j, mu_c/n_c, sigma_c/n_c) } :+
-                    gaussian(x_j, mu_1, variance_1)).toArray)
+                val posterior = DenseVectorRow[Double](components.map(likelihood).toArray)
                 val probs = norm(prior :* posterior)
 
                 // Combine the two probabilities into a single distribution and
-                // select a new label for the data point.  Record this in the
-                // label array.
-                labels(j) = new Multinomial(probs).sample
+                // select a new label for the data point.
+                val l_j_new  = new Multinomial(probs).sample
 
-                if (labels(j) == k) {
-                    k += 1
-                    mus.append(x_j.toDense)
-                    sigmas.append(DenseVectorRow.ones[Double](v))
-                    counts = DenseVectorRow.horzcat(counts, DenseVectorRow(1d))
+                if (l_j_new == 0) {
+                    // If the global component was created, create a new 
+                    // component using just the current data point.
+                    labels(j) = components.size
+                    components.append(newTheta(List(x_j))) //newComponent(x_j))
                 } else {
                     // Restore the bookeeping information for this point using the
                     // old assignment.
-                    if (i != 0) {
-                        counts(l_j) += 1
-                        mus(l_j) += x_j
-                        sigmas(l_j) += (mus(l_j)/counts(l_j) - x_j) :^ 2
-                    }
+                    labels(j) = l_j_new
+                    components(l_j_new) = updateComponent(components(l_j_new))
                 }
             }
+
+            val sigmas = components.map(_._3)
 
             // Re-estimate the means, counts, and variances for each component.
             // We do this by first grouping the data points based on their
@@ -106,19 +106,53 @@ class DirichletProcessMixtureModel(val numIterations: Int,
                                    .map{ case(k,v) => (k, v.map(_._2)) }
                                    .zipWithIndex
                                    .map{ case ((c_old, x), c) => {
-                mus(c) = x.reduce(_+_).toDense
-                counts(c) = x.size
-                sigmas(c) = x.map(x_j => (mus(c)/counts(c) - x_j) :^2).reduce(_+_) + epsilon
-                (c_old, c)
+                components(c+1) = newTheta(x.toList, sigmas(c_old))
+                (c_old, c+1)
             }}
-            k = labelRemap.size
-            mus = mus.slice(0, k)
-            sigmas = sigmas.slice(0, k)
-            counts = counts(0 until k)
+            components.trimEnd(components.size - (labelRemap.size+1))
+            components.foreach(println)
             labels = labels.map(labelRemap)
+
+            if (s contains (i+1))
+                report(i+1, labels.toList)
         }
 
         // Return the labels.
         labels.toArray
     }
+
+    def sampleTheta(mu_rho_0: DenseVectorRow[Double],
+                    rho_0: DenseVectorRow[Double],
+                    sigma_old: DenseVectorRow[Double],
+                    x:List[VectorRow[Double]]) = {
+        val sigma_sqr_prior = (rho_0 :+ sigma_old.mapValues(x.size/_)).map(1/_)
+        val sigma_prior = sigma_sqr_prior :^ 0.5
+        var mu_prior = mu_rho_0
+        mu_prior += x.reduce(_+_).toDense :/ sigma_old
+        mu_prior = mu_prior :* sigma_sqr_prior
+
+        val mu_prime = DenseVectorRow.randn(mu_rho_0.length)
+        val mu = mu_prime :* sigma_prior :+ mu_prior
+
+        val beta_prior = beta //+ x.size / 2d
+        val gamma_prior = x.map(_:-mu).map(_:^2).reduce(_+_).toDense/x.size + gamma
+        val rho_nlp = gamma_prior.mapValues(gp=> (new Gamma(beta_prior, gp).sample))
+        //println(rho_apc)
+        val sigma = rho_nlp //DenseVectorRow.ones[Double](sigma_old.length) //gamma_prior.mapValues(gp=> (new Gamma(beta_prior, gp).sample))
+
+        (x.size.toDouble, mu, sigma)
+    }
+
+    def newTheta2(x:List[VectorRow[Double]],
+                 sigma_old: DenseVectorRow[Double] = null) = {
+        val n_c = x.size
+        val mu_c = x.reduce(_+_).toDense / n_c
+        val sigma_c = (x.map(x_j => (mu_c - x_j) :^2).reduce(_+_)/n_c) + epsilon
+        (n_c.toDouble, mu_c, sigma_c)
+    }
+
+    def newComponent(x: VectorRow[Double]) : Theta = 
+        (1d, x.toDense, DenseVectorRow.ones[Double](x.length))
+    def updateComponent(theta: Theta) =
+        (theta._1+1, theta._2, theta._3)
 }
