@@ -28,12 +28,6 @@
     </repository>
 
     <repository>
-      <id>scala-tools.org</id>
-      <name>Scala-Tools Maven2 Repository</name>
-      <url>http://scala-tools.org/repo-snapshots</url>
-    </repository>
-
-    <repository>
       <id>scalanlp.org</id>
       <name>ScalaNLP Maven2 Repository</name>
       <url>http://repo.scalanlp.org/repo</url>
@@ -66,6 +60,12 @@
       <groupId>org.scalanlp</groupId>
       <artifactId>scalanlp-learn_2.9.1</artifactId>
       <version>0.4.RC1</version>
+      <exclusions>
+        <exclusion> 
+          <groupId>org.scalala</groupId>
+          <artifactId>scalala_2.9.1</artifactId>
+        </exclusion> 
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -132,6 +132,50 @@
         </executions>
       </plugin>
 
+      <!-- Sign the jars -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>sign-artifacts</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>sign</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- Plugin to create a single jar of all source files. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>2.1.2</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>scala-maven-plugin</artifactId>
+        <version>3.0.2</version>
+        <executions>
+          <execution>
+            <id>javadoc-jar</id>
+            <phase>package</phase>
+            <goals>
+              <goal>doc-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
   </build>
+
 </project>
