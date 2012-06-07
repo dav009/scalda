@@ -9,8 +9,8 @@ import java.io.PrintWriter
 
 object RunLearner {
     def main(args:Array[String]) {
-        if (args.size != 4) {
-            printf("usage: RunLearner <learnerType> <data.mat> <numClusters> <outFile>\n")
+        if (args.size != 5) {
+            printf("usage: RunLearner <learnerType> <data.mat> <numClusters> <outFile> <nTrials>\n")
             System.exit(1)
         }
 
@@ -18,7 +18,7 @@ object RunLearner {
                 DenseVector[Double](line.split("\\s+").map(_.toDouble)).t
         ).toList
 
-        val nTrials = 300
+        val nTrials = args(4).toInt
         val k = args(2).toInt
         val reportSet = Set(0, 1, 10, 100, nTrials)
         val learner = args(0) match {
@@ -27,6 +27,7 @@ object RunLearner {
                 DenseVector[Double](Array.fill(k)(1d))t,
                 DenseVector[Double](Array.fill(2)(1d)).t,
                 reportSet)
+            case "isgmm" => new gibbs.InfiniteSphericalGaussianMixtureModel(nTrials, 1, 2, 2, reportSet)
             case "immm" => new gibbs.InfiniteMultinomialMixtureModel(nTrials, 1, 1, reportSet)
             case "gmm" => new gibbs.FiniteGaussianMixtureModel(nTrials, 5, reportSet)
             case "km" => new gibbs.FiniteGaussianMixtureModel(nTrials, 1, reportSet, true)

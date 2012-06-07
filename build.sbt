@@ -12,7 +12,6 @@ mainClass in assembly := Some("edu.ucla.sspace.OnlineTopicModel")
 
 resolvers += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository"
 
-
 libraryDependencies += "org.scalala" %% "scalala" % "1.0.0.RC3-SNAPSHOT"
 
 libraryDependencies += "org.scalanlp" %% "scalanlp-learn" % "0.4.RC1"
@@ -22,5 +21,7 @@ libraryDependencies += "edu.ucla.sspace" % "sspace-wordsi" % "2.0"
 libraryDependencies += "com.googlecode.netlib-java" % "netlib-java" % "0.9.3"
 
 libraryDependencies += "org.apache.commons" % "commons-math3" % "3.0"
+
+libraryDependencies += "colt" % "colt" % "1.2.0"
 
 scalacOptions += "-deprecation"
