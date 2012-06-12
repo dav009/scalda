@@ -29,7 +29,7 @@ class InfiniteSphericalGaussianMixtureModel(val numIterations: Int,
      * variance
      * assigned points
      */
-    type Theta = (Double, DenseVectorRow[Double], Double)// List[VectorRow[Double]])
+    type Theta = (Double, DenseVectorRow[Double], Double)
 
     def train(data: List[VectorRow[Double]], ignored: Int) = {
         // Extract the shape of the data.
@@ -119,53 +119,6 @@ class InfiniteSphericalGaussianMixtureModel(val numIterations: Int,
         // Return the labels.
         labels.toArray
     }
-
-    /*
-    def empericalTheta(mu_rho_0: DenseVectorRow[Double],
-                       rho_0: Double,
-                       sigma_2_old: Double,
-                       x:List[VectorRow[Double]]) = {
-        val n = x.size.toDouble
-        val mu = x.reduce(_+_).toDense / n
-        val sigma = if (x.size == 1) sigma_2_old else x.map(_-mu).map(_.norm(2)).sum/n
-        (n, mu, sigma)
-    }
-       
-    def halfBayesTheta(mu_rho_0: DenseVectorRow[Double],
-                       rho_0: Double,
-                       sigma_2_old: Double,
-                       x:List[VectorRow[Double]]) = {
-        val mu = sampleMean(mu_rho_0, rho_0, sigma_2_old, x)
-        val sigma_2 = x.map(_-mu).map(_.norm(2)).sum / x.size
-        (x.size.toDouble, mu, sigma_2)
-    } 
-
-    def fullBayesTheta(mu_rho_0: DenseVectorRow[Double],
-                       rho_0: Double,
-                       sigma_2_old: Double,
-                       x:List[VectorRow[Double]]) = {
-        val mu = sampleMean(mu_rho_0, rho_0, sigma_2_old, x)
-        val beta_prior = beta + x.size / 2d
-        val gamma_prior = x.map(_-mu).map(_.norm(2)).map(pow(_,2)).reduce(_+_)/2d + gamma
-        //val sigma_2 = 1d/Gamma.staticNextDouble(beta_prior, gamma_prior)
-        println(beta_prior)
-        println(gamma_prior)
-        val sigma_2 = 1d/(new Gamma(beta_prior, gamma_prior).sample)
-        (x.size.toDouble, mu, sigma_2)
-    }
-
-    def sampleMean(mu_rho_0: DenseVectorRow[Double],
-                   rho_0: Double,
-                   sigma_2_old: Double,
-                   x:List[VectorRow[Double]]) = {
-        val sigma_2_prior = 1/(rho_0 + (x.size/ sigma_2_old))
-        val sigma_prior = sqrt(sigma_2_prior)
-        var mu_prior = (mu_rho_0 + (x.reduce(_+_).toDense / sigma_2_old)) *
-                       sigma_2_prior
-        val mu_prime = DenseVectorRow.randn(mu_rho_0.length)
-        mu_prime :* sigma_prior :+ mu_prior
-    }
-    */
 
     def updateComponent(theta: Theta, x: VectorRow[Double], delta: Double) =
         if (delta >= 0)
