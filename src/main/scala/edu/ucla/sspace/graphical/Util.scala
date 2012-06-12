@@ -6,6 +6,7 @@ import scalala.tensor.dense.DenseMatrix
 import scalala.tensor.dense.DenseVectorRow
 
 import scala.util.Random
+import scala.math.{E,pow}
 
 
 object Util {

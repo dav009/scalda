@@ -1,6 +1,8 @@
 package edu.ucla.sspace.graphical.gibbs
 
+import edu.ucla.sspace.graphical.ComponentGenerator
 import edu.ucla.sspace.graphical.Learner
+import edu.ucla.sspace.graphical.Likelihood._
 import edu.ucla.sspace.graphical.Util.{norm,epsilon}
 
 import scalala.library.Library._
@@ -8,8 +10,9 @@ import scalala.tensor.dense.DenseVectorRow
 import scalala.tensor.mutable.VectorRow
 
 import scalanlp.stats.distributions.Multinomial
+import scalanlp.stats.distributions.Gamma
 
-import cern.jet.random.Gamma
+//import cern.jet.random.Gamma
 
 import scala.math.{Pi,E}
 import scala.util.Random
@@ -17,8 +20,7 @@ import scala.util.Random
 
 class InfiniteSphericalGaussianMixtureModel(val numIterations: Int, 
                                             val alpha: Double,
-                                            val beta: Double,
-                                            val gamma: Double,
+                                            val generator: ComponentGenerator,
                                             s: Set[Int] = Set[Int]()) extends Learner {
 
     /**
@@ -39,13 +41,6 @@ class InfiniteSphericalGaussianMixtureModel(val numIterations: Int,
         val mu_0 = data.reduce(_+_).toDense / n
         // Compute the variance of all data points to the global mean.
         val variance_0 = data.map(_-mu_0).map(_.norm(2)).map(pow(_, 2)).reduce(_+_) / n
-
-        val mu_hyper = DenseVectorRow.zeros[Double](v)
-        val sigma_hyper = 0d
-
-        def newTheta(x:List[VectorRow[Double]],
-                     sigma_old: Double = 1d) =
-             fullBayesTheta(mu_hyper, sigma_hyper, sigma_old, x)
 
         // Create the global component that will be used to determine when a 
         // new component should be sampled.
@@ -88,7 +83,7 @@ class InfiniteSphericalGaussianMixtureModel(val numIterations: Int,
                     // If the global component was created, create a new 
                     // component using just the current data point.
                     labels(j) = components.size
-                    components.append(newTheta(List(x_j))) 
+                    components.append(generator.sample(List(x_j), 1d))
                 } else {
                     // Restore the bookeeping information for this point using the
                     // old assignment.
@@ -110,7 +105,7 @@ class InfiniteSphericalGaussianMixtureModel(val numIterations: Int,
                                    .map{ case(k,v) => (k, v.map(_._2)) }
                                    .zipWithIndex
                                    .map{ case ((c_old, x), c) => {
-                components(c+1) = newTheta(x.toList, sigmas(c_old))
+                components(c+1) = generator.sample(x.toList, sigmas(c_old))
                 (c_old, c+1)
             }}
             components.trimEnd(components.size - (labelRemap.size+1))
@@ -125,6 +120,7 @@ class InfiniteSphericalGaussianMixtureModel(val numIterations: Int,
         labels.toArray
     }
 
+    /*
     def empericalTheta(mu_rho_0: DenseVectorRow[Double],
                        rho_0: Double,
                        sigma_2_old: Double,
@@ -151,7 +147,10 @@ class InfiniteSphericalGaussianMixtureModel(val numIterations: Int,
         val mu = sampleMean(mu_rho_0, rho_0, sigma_2_old, x)
         val beta_prior = beta + x.size / 2d
         val gamma_prior = x.map(_-mu).map(_.norm(2)).map(pow(_,2)).reduce(_+_)/2d + gamma
-        val sigma_2 = 1d/Gamma.staticNextDouble(beta_prior, gamma_prior)
+        //val sigma_2 = 1d/Gamma.staticNextDouble(beta_prior, gamma_prior)
+        println(beta_prior)
+        println(gamma_prior)
+        val sigma_2 = 1d/(new Gamma(beta_prior, gamma_prior).sample)
         (x.size.toDouble, mu, sigma_2)
     }
 
@@ -166,11 +165,8 @@ class InfiniteSphericalGaussianMixtureModel(val numIterations: Int,
         val mu_prime = DenseVectorRow.randn(mu_rho_0.length)
         mu_prime :* sigma_prior :+ mu_prior
     }
+    */
 
-    def gaussian(x: VectorRow[Double],
-                 mu: DenseVectorRow[Double],
-                 sigma_2: Double) =
-        1/sqrt(sigma_2*2*Pi)*exp(-.5 * (x-mu).norm(2) / sigma_2)
     def updateComponent(theta: Theta, x: VectorRow[Double], delta: Double) =
         if (delta >= 0)
             (theta._1+delta, theta._2, theta._3)

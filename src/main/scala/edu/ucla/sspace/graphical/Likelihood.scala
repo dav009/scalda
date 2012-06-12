@@ -19,8 +19,8 @@ object Likelihood {
         a*b 
     }
 
-    def gaussian(x: VectorRow[Double], 
-                 mu: DenseVectorRow[Double], 
-                 sigma: Double) = 
-        exp(((x-mu):^2).sum/x.length)/sqrt(2*Pi*sigma)
+    def gaussian(x: VectorRow[Double],
+                 mu: DenseVectorRow[Double],
+                 sigma_2: Double) =
+        1/sqrt(sigma_2*2*Pi)*exp(-.5 * pow((x-mu).norm(2),2) / sigma_2)
 }
