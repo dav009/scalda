@@ -31,12 +31,12 @@ object RunLearner {
                 DenseVector[Double](Array.fill(2)(1d)).t,
                 reportSet)
 
-            case "isgmm" => new gibbs.InfiniteSphericalGaussianMixtureModel(nTrials, 1, getGenerator(data, v), reportSet)
+            case "isgmm" => new gibbs.InfiniteSphericalGaussianMixtureModel(nTrials, 1, getGenerator(data), reportSet)
             case "immm" => new gibbs.InfiniteMultinomialMixtureModel(nTrials, 1, 1, reportSet)
             case "gdpmm" => new gibbs.DirichletProcessMixtureModel(nTrials, 1, reportSet)
             case "dpvmf" => new gibbs.InfiniteVonMisesFisherMixtureModel(nTrials, 1d, reportSet)
 
-            case "sgmm" => new gibbs.FiniteSphericalGaussianMixtureModel(nTrials, 1, getGenerator(data, v), reportSet)
+            case "sgmm" => new gibbs.FiniteSphericalGaussianMixtureModel(nTrials, 1, getGenerator(data), reportSet)
             case "gmm" => new gibbs.FiniteGaussianMixtureModel(nTrials, 5, reportSet)
             case "km" => new gibbs.FiniteGaussianMixtureModel(nTrials, 1, reportSet, true)
             case "vmf" => new em.FiniteMixtureVonMisesFisher(nTrials, reportSet)
@@ -52,10 +52,10 @@ object RunLearner {
         w.close
     }
 
-    def getGenerator(data: List[DenseVectorRow[Double]], v: Int) = {
+    def getGenerator(data: List[DenseVectorRow[Double]]) = {
         val mu = data.reduce(_+_).toDense / data.size
         val variance = data.map(_-mu).map(_.norm(2)).map(pow(_,2)).sum / data.size
-        new SphericalGaussianBayesian(mu / variance, 1/variance, 1, 1)
+        new SphericalGaussianRasmussen(mu,  variance)
         //new SphericalGaussianMaximumLikelihood()
     }
 }

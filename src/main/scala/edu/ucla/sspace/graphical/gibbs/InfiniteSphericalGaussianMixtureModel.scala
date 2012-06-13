@@ -3,19 +3,13 @@ package edu.ucla.sspace.graphical.gibbs
 import edu.ucla.sspace.graphical.ComponentGenerator
 import edu.ucla.sspace.graphical.Learner
 import edu.ucla.sspace.graphical.Likelihood._
-import edu.ucla.sspace.graphical.Util.{norm,epsilon}
+import edu.ucla.sspace.graphical.Util.norm
 
 import scalala.library.Library._
 import scalala.tensor.dense.DenseVectorRow
 import scalala.tensor.mutable.VectorRow
 
 import scalanlp.stats.distributions.Multinomial
-import scalanlp.stats.distributions.Gamma
-
-//import cern.jet.random.Gamma
-
-import scala.math.{Pi,E}
-import scala.util.Random
 
 
 class InfiniteSphericalGaussianMixtureModel(val numIterations: Int, 
@@ -32,9 +26,7 @@ class InfiniteSphericalGaussianMixtureModel(val numIterations: Int,
     type Theta = (Double, DenseVectorRow[Double], Double)
 
     def train(data: List[VectorRow[Double]], ignored: Int) = {
-        // Extract the shape of the data.
         val n = data.size
-        val v = data(0).length
         val t = n - 1 + alpha
 
         // Compute the global mean of all data points.
@@ -92,9 +84,7 @@ class InfiniteSphericalGaussianMixtureModel(val numIterations: Int,
                 }
             }
 
-            println("Sampling new components")
             val sigmas = components.map(_._3)
-
             // Re-estimate the means, counts, and variances for each component.
             // We do this by first grouping the data points based on their
             // assigned component, summing the points assigned to each
@@ -109,8 +99,10 @@ class InfiniteSphericalGaussianMixtureModel(val numIterations: Int,
                 (c_old, c+1)
             }}
             components.trimEnd(components.size - (labelRemap.size+1))
-            components.foreach(println)
             labels = labels.map(labelRemap)
+            val mu_k = components.view(1, components.size).map(_._2).toArray
+            val variance_k = components.view(1, components.size).map(_._3).toArray
+            generator.update(mu_k, variance_k)
 
             if (s contains (i+1))
                 report(i+1, labels.toList)
