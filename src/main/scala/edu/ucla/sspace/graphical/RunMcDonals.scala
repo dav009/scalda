@@ -38,7 +38,7 @@ object RunMcDonalds {
             case "gdpmm" => new gibbs.DirichletProcessMixtureModel(nTrials, 1)
         }
 
-        val assignments = learner.train(menu.map(_._3), k)
+        val assignments = learner.train(menu.map(_._3), k, null)
         val w = new PrintWriter(args(3))
         w.println("Category Item Group")
         for ( (d, l) <- menu.zip(assignments))

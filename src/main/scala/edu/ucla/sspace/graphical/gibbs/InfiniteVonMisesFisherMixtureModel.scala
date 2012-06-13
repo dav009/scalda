@@ -20,7 +20,8 @@ class InfiniteVonMisesFisherMixtureModel(numIters: Int,
 
     type Theta = (Double, DenseVectorRow[Double], Double, Double)
 
-    def train(unNormData : List[VectorRow[Double]], ignored: Int) = {
+    def train(unNormData : List[VectorRow[Double]], ignored: Int,
+              ingored2: List[List[VectorRow[Double]]]) = {
         // Normalize each data point so that it's on the unit sphere, i.e. has magnitude 1.0
         val mean = unNormData.reduce(_+_).toDense / unNormData.size
         val data = unNormData.map(_ - mean).map(x_j => x_j/x_j.norm(2))

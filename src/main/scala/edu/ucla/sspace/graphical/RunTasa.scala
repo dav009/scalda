@@ -41,7 +41,7 @@ object RunTasa {
             case "gdpmm" => new gibbs.DirichletProcessMixtureModel(nTrials, 1)
         }
 
-        val assignments = learner.train(data.toList, k)
+        val assignments = learner.train(data.toList, k, null)
         val w = new PrintWriter(args(3))
         w.println("X Y Group")
         for ( (d, l) <- data.zip(assignments))

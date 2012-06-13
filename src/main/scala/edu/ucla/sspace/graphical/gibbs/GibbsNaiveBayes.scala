@@ -20,7 +20,8 @@ class GibbsNaiveBayes(val numIterations: Int,
     val pi_dist = new Dirichlet(alpha)
 
     def train(data: List[VectorRow[Double]], 
-              k: Int) = {
+              k: Int,
+              ignored: List[List[VectorRow[Double]]]) = {
         val v = data(0).length
         val n = data.size
 

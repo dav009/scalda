@@ -21,7 +21,9 @@ class DirichletProcessMixtureModel(val numIterations: Int,
     val beta = 1d
     val gamma = 1d
 
-    def train(data: List[VectorRow[Double]], ignored: Int) = {
+    def train(data: List[VectorRow[Double]],
+              ignored: Int,
+              ignored2: List[List[VectorRow[Double]]]) = {
         // Extract the shape of the data.
         val n = data.size
         val v = data(0).length

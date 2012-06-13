@@ -48,7 +48,7 @@ object RunLearner {
         learner.setReporter(w, reporter)
 
         w.println("X Y Iteration Group")
-        val assignments = learner.train(data.toList, k)
+        val assignments = learner.train(data.toList, k, null)
         w.close
     }
 
