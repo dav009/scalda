@@ -1,5 +1,6 @@
 package edu.ucla.sspace.graphical
 
+import DistanceMetrics.euclidean
 import Util.determiniate
 
 import scalala.library.Library.{pow,sqrt,exp,log}
@@ -22,5 +23,5 @@ object Likelihood {
     def gaussian(x: VectorRow[Double],
                  mu: DenseVectorRow[Double],
                  sigma_2: Double) =
-        1/sqrt(sigma_2*2*Pi)*exp(-.5 * pow((x-mu).norm(2),2) / sigma_2)
+        1/sqrt(sigma_2*2*Pi)*exp(-.5 * pow(euclidean(x, mu),2) / sigma_2)
 }

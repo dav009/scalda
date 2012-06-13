@@ -47,7 +47,7 @@ class InfiniteSphericalGaussianMixtureModel(val numIterations: Int,
             printf("Starting iteration [%d] with [%d] components,\n", i, components.size-1)
             for ( (x_j, j) <- data.zipWithIndex ) {
                 // Setup a helper function to compute the likelihood for point x.
-                def likelihood(theta: Theta) = gaussian(x_j, theta._2, theta._3)
+                def dataLikelihood(theta: Theta) = gaussian(x_j, theta._2, theta._3)
 
                 val l_j = labels(j)
 
@@ -64,8 +64,8 @@ class InfiniteSphericalGaussianMixtureModel(val numIterations: Int,
                 val prior = DenseVectorRow[Double](components.map(_._1 / t).toArray)
                 // Compute the probability of the data point given each
                 // component using the sufficient statistics.
-                val posterior = DenseVectorRow[Double](components.map(likelihood).toArray)
-                val probs = norm(prior :* posterior)
+                val likelihood = DenseVectorRow[Double](components.map(dataLikelihood).toArray)
+                val probs = norm(prior :* likelihood)
 
                 // Combine the two probabilities into a single distribution and
                 // select a new label for the data point.

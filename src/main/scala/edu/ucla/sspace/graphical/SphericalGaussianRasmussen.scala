@@ -1,5 +1,7 @@
 package edu.ucla.sspace.graphical
 
+import DistanceMetrics.euclidean
+
 import scalala.library.Library._
 import scalala.tensor.dense.DenseVectorRow
 import scalala.tensor.mutable.VectorRow
@@ -42,6 +44,10 @@ class SphericalGaussianRasmussen(val mu_0: DenseVectorRow[Double],
         beta = sampleBeta(variance_k, k)
     }
 
+    def printMean(mu: DenseVectorRow[Double]) {
+        println(mu.pairsIterator.filter(_._2 > 0d).map{ case(k,v) => k + ":" + v}.mkString(" "))
+    }
+
     def sampleLambda(mu_k: Array[DenseVectorRow[Double]], k: Int) = {
         val variance_prior = 1/(1/variance_0 + k*rho)
         val mu_prior = ((mu_0 / variance_0) :+ (mu_k.reduce(_+_) * rho))*variance_prior
@@ -52,13 +58,13 @@ class SphericalGaussianRasmussen(val mu_0: DenseVectorRow[Double],
     def sampleRho(mu_k: Array[DenseVectorRow[Double]], k: Int) = {
         val beta_prior = k+1
         val omega_prior = beta_prior / (variance_0 + k*computeVariance(mu_k, lambda))
-        new Gamma(beta_prior, omega_prior).sample
+        sampleGamma(beta_prior, omega_prior)
     }
 
     def sampleOmega(variance_k: Array[Double], k: Int) = {
         val beta_prior = k*beta + 1
         val omega_prior = beta_prior / (1/variance_0 + beta*variance_k.map(1/_).sum)
-        new Gamma(beta_prior, omega_prior).sample
+        sampleGamma(beta_prior, omega_prior)
     }
 
     def sampleBeta(variance_k: Array[Double], k: Int) = {
@@ -67,12 +73,10 @@ class SphericalGaussianRasmussen(val mu_0: DenseVectorRow[Double],
 
     def computeVariance(data: Seq[VectorRow[Double]],
                         mu: DenseVectorRow[Double]) = 
-        data.map(_-mu)
-            .map(_.norm(2))
+        data.map(euclidean(mu, _))
             .map(pow(_, 2))
-            .foldLeft(0d)(_+_) / data.size
+            .reduce(_+_) / data.size
 
     def sampleGamma(beta: Double, omega: Double) =
         new Gamma(beta/2d, 2*omega/beta).sample
-
 }

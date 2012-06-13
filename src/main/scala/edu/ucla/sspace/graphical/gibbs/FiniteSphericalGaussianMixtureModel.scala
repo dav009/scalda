@@ -33,6 +33,7 @@ class FiniteSphericalGaussianMixtureModel(val numIterations: Int,
         for ((x_j,j) <- data.zipWithIndex) {
             def dataLikelihood(theta: Theta) = gaussian(x_j, theta._2, theta._3)
             val likelihood = DenseVectorRow[Double](components.map(dataLikelihood))
+            println(likelihood)
             val l_j = likelihood.argmax
             components(l_j) = updateComponent(components(l_j), x_j, +1)
             labels(j) = l_j
@@ -58,6 +59,9 @@ class FiniteSphericalGaussianMixtureModel(val numIterations: Int,
                 val prior = DenseVectorRow[Double](components.map(priorLikelihood))
                 val likelihood = DenseVectorRow[Double](components.map(dataLikelihood))
                 val probs = norm(prior :* likelihood)
+                println(prior)
+                println(likelihood)
+                println(probs)
 
                 val l_j_new  = new Multinomial(probs).sample
                 components(l_j_new) = updateComponent(components(l_j_new), x_j, +1)
@@ -65,6 +69,9 @@ class FiniteSphericalGaussianMixtureModel(val numIterations: Int,
             }
 
             components = updateComponents(components, labels, data)
+
+            println(components.map(_._1).mkString(" "))
+            println(components.map(_._3).mkString(" "))
 
             val mu_k = components.map(_._2)
             val variance_k = components.map(_._3)
