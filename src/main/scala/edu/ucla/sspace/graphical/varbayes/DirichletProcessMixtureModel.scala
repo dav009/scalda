@@ -16,7 +16,8 @@ import java.io.PrintWriter
 
 class DirichletProcessMixtureModel(val nIter: Int, val alpha: Double) extends Learner {
 
-    def train(data: List[VectorRow[Double]], k: Int) = {
+    def train(data: List[VectorRow[Double]], k: Int,
+              ignored: List[List[VectorRow[Double]]]) = {
         // Get the shape of the data set in terms of number of data points and 
         // number of features.
         val n = data.size

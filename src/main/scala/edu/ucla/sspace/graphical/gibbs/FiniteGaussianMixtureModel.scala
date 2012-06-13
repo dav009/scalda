@@ -18,7 +18,8 @@ class FiniteGaussianMixtureModel(val numIterations: Int,
                                  s: Set[Int] = Set[Int](),
                                  val useKMeans: Boolean = false) extends Learner {
 
-    def train(data: List[VectorRow[Double]], k: Int) = {
+    def train(data: List[VectorRow[Double]], k: Int,
+              ignored: List[List[VectorRow[Double]]]) = {
         // Extract the shape of the data.
         val n = data.size
         val v = data(0).length

@@ -37,7 +37,7 @@ object RunSpam {
             case "gdpmm" => new gibbs.DirichletProcessMixtureModel(nTrials, 1)
         }
 
-        val assignments = learner.train(menu.map(_._2), k)
+        val assignments = learner.train(menu.map(_._2), k, null)
         val w = new PrintWriter(args(3))
         w.println("Spam Group")
         for ( (d, l) <- menu.zip(assignments))

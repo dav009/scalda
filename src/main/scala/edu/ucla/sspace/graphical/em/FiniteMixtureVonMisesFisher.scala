@@ -17,7 +17,8 @@ class FiniteMixtureVonMisesFisher(numIters: Int,
 
     type Theta = ( DenseVectorRow[Double], Double, Double)
 
-    def train(unNormData : List[VectorRow[Double]], k: Int) = {
+    def train(unNormData : List[VectorRow[Double]], k: Int,
+              ignored: List[List[VectorRow[Double]]]) = {
         val mean = unNormData.reduce(_+_).toDense / unNormData.size
         // Normalize each data point so that it's on the unit sphere, i.e. has magnitude 1.0
         val data = unNormData.map(_ - mean).map(x_j => x_j/x_j.norm(2))

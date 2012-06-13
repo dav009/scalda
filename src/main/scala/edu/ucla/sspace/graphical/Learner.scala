@@ -5,7 +5,9 @@ import scalala.tensor.mutable.VectorRow
 import java.io.PrintWriter
 
 trait Learner {
-   def train(data: List[VectorRow[Double]], numGroups: Int) : Array[Int]
+   def train(data: List[VectorRow[Double]], 
+             numGroups: Int,
+             priorData: List[List[VectorRow[Double]]]) : Array[Int]
 
    var dataPrinter: () => List[String] = null;
    var printer: PrintWriter = null;
