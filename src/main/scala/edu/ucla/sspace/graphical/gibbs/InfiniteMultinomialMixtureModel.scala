@@ -3,14 +3,12 @@ package edu.ucla.sspace.graphical.gibbs
 import edu.ucla.sspace.graphical.Learner
 import edu.ucla.sspace.graphical.Util.{norm,sampleUnormalizedLogMultinomial}
 
-import scalala.library.Library._
-import scalala.tensor.dense.DenseVectorRow
-import scalala.tensor.dense.DenseVectorRow
-import scalala.tensor.mutable.VectorRow
+import breeze.numerics._
+import breeze.linalg.DenseVector
+import breeze.linalg.Vector
 
-import scalanlp.stats.distributions.Beta
-import scalanlp.stats.distributions.Dirichlet
-import scalanlp.stats.distributions.Multinomial
+import breeze.stats.distributions.Dirichlet
+import breeze.stats.distributions.Multinomial
 
 import scala.io.Source
 
