@@ -23,7 +23,8 @@ object DistanceMetrics {
         val dist = v2.mapNonZeroPairs( (i, y) => {
             val v1Val = v1(i)
             v1Magnitude -= v1Val * v1Val
-            pow(y - v1Val, 2)
+            val diff = y - v1Val
+            diff * diff
         }).sum
         sqrt(v1Magnitude + dist)
     }

@@ -4,6 +4,7 @@ import edu.ucla.sspace.graphical.ComponentGenerator
 import edu.ucla.sspace.graphical.Learner
 import edu.ucla.sspace.graphical.Likelihood._
 import edu.ucla.sspace.graphical.Util.norm
+import edu.ucla.sspace.graphical.DistanceMetrics.euclidean
 
 import scalala.library.Library._
 import scalala.tensor.dense.DenseVectorRow
@@ -25,19 +26,26 @@ class InfiniteSphericalGaussianMixtureModel(val numIterations: Int,
      */
     type Theta = (Double, DenseVectorRow[Double], Double)
 
-    def train(data: List[VectorRow[Double]], ignored: Int) = {
+    def train(data: List[VectorRow[Double]],
+              ignored: Int,
+              priorData: List[List[VectorRow[Double]]]) = {
         val n = data.size
         val t = n - 1 + alpha
 
         // Compute the global mean of all data points.
         val mu_0 = data.reduce(_+_).toDense / n
         // Compute the variance of all data points to the global mean.
-        val variance_0 = data.map(_-mu_0).map(_.norm(2)).map(pow(_, 2)).reduce(_+_) / n
+        val variance_0 = data.map(euclidean(_, mu_0)).map(pow(_, 2)).reduce(_+_) / n
 
         // Create the global component that will be used to determine when a 
         // new component should be sampled.
-        //val components = Array((alpha, mu_0, variance_0)).toBuffer
         val components = Array((alpha, mu_0, variance_0)).toBuffer
+        if (priorData != null)
+            priorData.foreach( preGroup => {
+                    val mu = preGroup.reduce(_+_).toDense / preGroup.size
+                    val variance = preGroup.map(euclidean(_, mu)).map(pow(_, 2)).sum / preGroup.size
+                    components.append(generator.sample(preGroup, variance))
+            })
 
         // Setup the initial labels for all the data points.  These start off 
         // with no meaningful value.
@@ -75,15 +83,19 @@ class InfiniteSphericalGaussianMixtureModel(val numIterations: Int,
                     // If the global component was created, create a new 
                     // component using just the current data point.
                     labels(j) = components.size
-                    components.append(generator.sample(List(x_j), 1d))
+                    components.append(generator.sample(List(x_j), generator.initialVariance))
                 } else {
                     // Restore the bookeeping information for this point using the
                     // old assignment.
                     labels(j) = l_j_new
                     components(l_j_new) = updateComponent(components(l_j_new), x_j, 1)
                 }
+
+                if (j % 100 == 0)
+                    printf("Finished data point [%d] with [%d] components.\n", j, components.size-1)
             }
 
+            printf("Updating components in iteration [%d]\n", i)
             val sigmas = components.map(_._3)
             // Re-estimate the means, counts, and variances for each component.
             // We do this by first grouping the data points based on their

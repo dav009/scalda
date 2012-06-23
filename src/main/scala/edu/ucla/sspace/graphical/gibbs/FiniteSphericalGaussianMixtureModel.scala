@@ -22,7 +22,9 @@ class FiniteSphericalGaussianMixtureModel(val numIterations: Int,
 
     type Theta = (Double, DenseVectorRow[Double], Double)
 
-    def train(data: List[VectorRow[Double]], k: Int) = {
+    def train(data: List[VectorRow[Double]],
+              k: Int,
+              priorData: List[List[VectorRow[Double]]]) = {
         // Extract the shape of the data.
         val n = data.size
         val alpha_k = alpha/k.toDouble

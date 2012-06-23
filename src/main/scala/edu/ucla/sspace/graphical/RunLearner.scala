@@ -1,5 +1,7 @@
 package edu.ucla.sspace.graphical
 
+import DistanceMetrics.euclidean
+
 import scalala.library.Library.pow
 import scalala.tensor.dense.DenseVector
 import scalala.tensor.dense.DenseVectorRow
@@ -54,7 +56,7 @@ object RunLearner {
 
     def getGenerator(data: List[DenseVectorRow[Double]]) = {
         val mu = data.reduce(_+_).toDense / data.size
-        val variance = data.map(_-mu).map(_.norm(2)).map(pow(_,2)).sum / data.size
+        val variance = data.map(euclidean(_,mu)).map(pow(_,2)).sum / data.size
         new SphericalGaussianRasmussen(mu,  variance)
         //new SphericalGaussianMaximumLikelihood()
     }

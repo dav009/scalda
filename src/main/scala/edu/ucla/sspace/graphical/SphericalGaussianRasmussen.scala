@@ -19,7 +19,11 @@ class SphericalGaussianRasmussen(val mu_0: DenseVectorRow[Double],
     var omega = new Gamma(1, variance_0).sample
 
     def initial() =
-        (0d, DenseVectorRow.randn(v) :* sqrt(1/rho) :+ lambda, 1/sampleGamma(beta, 1/omega))
+        (0d, initialMean, initialVariance)
+    def initialMean() = 
+        DenseVectorRow.randn(v) :* sqrt(1/rho) :+ lambda
+    def initialVariance() = 
+        1/sampleGamma(beta, 1/omega)
 
     def sample(data: List[VectorRow[Double]], sigma_2_prime: Double) = {
         val rho_prime = 1/sigma_2_prime

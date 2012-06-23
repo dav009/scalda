@@ -17,7 +17,11 @@ class SphericalGaussianBayesian(val mu_0: DenseVectorRow[Double],
     val mu_rho_prior = mu_0 * rho_prior
 
     def initial() =
-        (0d, DenseVectorRow.randn(v) :* sigma_0 :+ mu_0, variance_0)
+        (0d, initialMean, initialVariance)
+    def initialMean() = 
+        DenseVectorRow.randn(v) :* sigma_0 :+ mu_0
+    def initialVariance() = 
+        variance_0
 
     def sample(data: List[VectorRow[Double]], sigma_2_old: Double) = {
         val sigma_2_hyper = 1/(rho_prior + (data.size/ sigma_2_old))

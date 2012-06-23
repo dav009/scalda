@@ -12,7 +12,11 @@ class SphericalGaussianMaximumLikelihood(val mu_0: DenseVectorRow[Double],
     val sigma_0 = sqrt(1/variance_0)
 
     def initial() =
-        (0d, DenseVectorRow.randn(v) :* sigma_0 :+ mu_0, variance_0)
+        (0d, initialMean, initialVariance)
+    def initialMean() = 
+        DenseVectorRow.randn(v) :* sigma_0 :+ mu_0
+    def initialVariance() = 
+        variance_0
 
     def sample(data: List[VectorRow[Double]], sigma_2_old: Double) = {
         val n = data.size.toDouble

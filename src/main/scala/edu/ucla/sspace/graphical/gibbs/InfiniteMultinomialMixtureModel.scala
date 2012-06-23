@@ -30,28 +30,23 @@ class InfiniteMultinomialMixtureModel(val numIterations: Int,
 
         val globalStats = data.reduce(_+_).toDense
         var components = Array((alpha, sampleTheta(globalStats), globalStats)).toBuffer
-        priorData.foreach( preGroup => {
-                val cummulative = preGroup.reduce(_+_).toDense
-                components.append((preGroup.size.toDouble, sampleTheta(cummulative), cummulative))
-        })
+        if (priorData != null)
+            priorData.foreach( preGroup => {
+                    val cummulative = preGroup.reduce(_+_).toDense
+                    components.append((preGroup.size.toDouble, sampleTheta(cummulative), cummulative))
+            })
 
         var labels = Array.fill(n)(0)
         val lines = Source.stdin.getLines
 
+        def prior(n_c: Double) = n_c / (n-1+alpha)
         for (i <- 0 until numIterations) {
             printf("Starting iteration [%d] with [%d] components,\n", i, components.size-1)
-            printf("Sampling new assignmentions\n")
             for ( (x_j, j) <- data.zipWithIndex ) {
-                def prior(n_c: Double) = 
-                    n_c / (if (i == 0) (j+alpha) else (n-1+alpha))
                 def likelihood(theta: DenseVectorRow[Double]) =
                     x_j.pairsIteratorNonZero
                        .map{ case (k, v) => v * log (theta(k)) }
                        .sum
-                    /*
-                       .map{ case (k, v) => pow(theta(k), v) }
-                       .product
-                       */
 
                 val l_j = labels(j)
                 if (i != 0)
@@ -59,23 +54,7 @@ class InfiniteMultinomialMixtureModel(val numIterations: Int,
 
                 val probs = components.map( c => log(prior(c._1)) + likelihood(c._2))
                                       .toArray
-                /*
-                val probs = DenseVectorRow[Double](
-                    components.map( c => prior(c._1) * likelihood(c._2))
-                              .toArray)
-
-                println(components.map(c => 
-                    x_j.pairsIteratorNonZero
-                       .map{ case (k, v) => v * log(c._2(k)) }
-                       .sum).mkString(" "))
-                */
-
                 val l_j_new = sampleUnormalizedLogMultinomial(probs)
-                println(probs.mkString(" "))
-                println(l_j_new)
-                print("Step forward:")
-                lines.next
-                    //new Multinomial(norm(probs)).sample
 
                 if (l_j_new == 0) {
                     labels(j) = components.size
@@ -84,9 +63,12 @@ class InfiniteMultinomialMixtureModel(val numIterations: Int,
                     labels(j) = l_j_new
                     components(l_j_new) = update(components(l_j_new), x_j, 1)
                 }
+
+                if (j % 100 == 0)
+                    printf("Finished data point [%d] with [%d] components.\n", j, components.size-1)
             }
 
-            printf("Sampling new component parameters\n")
+            printf("Updating components in iteration [%d]\n", i)
             val newComponents = Array[Theta]().toBuffer
             val labelRemap = components.zipWithIndex
                                        .filter(_._1._1 > 0)
