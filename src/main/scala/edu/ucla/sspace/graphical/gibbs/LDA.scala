@@ -10,8 +10,8 @@ import edu.ucla.sspace.text.Document
 import edu.ucla.sspace.vector.DenseVector
 import edu.ucla.sspace.vector.DoubleVector
 
-import scalala.tensor._
-import scalala.tensor.dense._
+import breeze.numerics._
+import breeze.linalg._
 
 import scala.collection.JavaConversions.asScalaIterator
 import scala.collection.JavaConversions.setAsJavaSet
@@ -19,6 +19,7 @@ import scala.io.Source
 import scala.util.Random._
 
 import java.util.HashSet
+
 
 class LDA(stopWords:Set[String], 
           val numIterations:Int,

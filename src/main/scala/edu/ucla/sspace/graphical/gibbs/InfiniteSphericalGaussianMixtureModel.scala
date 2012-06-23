@@ -6,11 +6,11 @@ import edu.ucla.sspace.graphical.Likelihood._
 import edu.ucla.sspace.graphical.Util.norm
 import edu.ucla.sspace.graphical.DistanceMetrics.euclidean
 
-import scalala.library.Library._
-import scalala.tensor.dense.DenseVectorRow
-import scalala.tensor.mutable.VectorRow
+import breeze.numerics._
+import breeze.linalg.DenseVector
+import breeze.linalg.Vector
 
-import scalanlp.stats.distributions.Multinomial
+import breeze.stats.distributions.Multinomial
 
 
 class InfiniteSphericalGaussianMixtureModel(val numIterations: Int, 
