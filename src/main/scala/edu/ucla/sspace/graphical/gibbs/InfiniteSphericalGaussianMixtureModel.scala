@@ -6,11 +6,12 @@ import edu.ucla.sspace.graphical.Likelihood._
 import edu.ucla.sspace.graphical.Util.norm
 import edu.ucla.sspace.graphical.DistanceMetrics.euclidean
 
-import breeze.numerics._
 import breeze.linalg.DenseVector
 import breeze.linalg.Vector
 
 import breeze.stats.distributions.Multinomial
+
+import scala.math.pow
 
 
 class InfiniteSphericalGaussianMixtureModel(val numIterations: Int, 
@@ -24,26 +25,26 @@ class InfiniteSphericalGaussianMixtureModel(val numIterations: Int,
      * variance
      * assigned points
      */
-    type Theta = (Double, DenseVectorRow[Double], Double)
+    type Theta = (Double, DenseVector[Double], Double)
 
-    def train(data: List[VectorRow[Double]],
+    def train(data: List[Vector[Double]],
               ignored: Int,
-              priorData: List[List[VectorRow[Double]]]) = {
+              priorData: List[List[Vector[Double]]]) = {
         val n = data.size
         val t = n - 1 + alpha
 
         // Compute the global mean of all data points.
-        val mu_0 = data.reduce(_+_).toDense / n
+        val mu_0 = toDense(data.reduce(_+_)) / n.toDouble
         // Compute the variance of all data points to the global mean.
-        val variance_0 = data.map(euclidean(_, mu_0)).map(pow(_, 2)).reduce(_+_) / n
+        val variance_0 = data.map(euclidean(_, mu_0)).map(pow(_, 2)).reduce(_+_) / n.toDouble
 
         // Create the global component that will be used to determine when a 
         // new component should be sampled.
         val components = Array((alpha, mu_0, variance_0)).toBuffer
         if (priorData != null)
             priorData.foreach( preGroup => {
-                    val mu = preGroup.reduce(_+_).toDense / preGroup.size
-                    val variance = preGroup.map(euclidean(_, mu)).map(pow(_, 2)).sum / preGroup.size
+                    val mu = toDense(preGroup.reduce(_+_)) / preGroup.size.toDouble
+                    val variance = preGroup.map(euclidean(_, mu)).map(pow(_, 2)).sum / preGroup.size.toDouble
                     components.append(generator.sample(preGroup, variance))
             })
 
@@ -69,10 +70,10 @@ class InfiniteSphericalGaussianMixtureModel(val numIterations: Int,
 
                 // Compute the probability of selecting each component based on
                 // their sizes.
-                val prior = DenseVectorRow[Double](components.map(_._1 / t).toArray)
+                val prior = DenseVector[Double](components.map(_._1 / t).toArray)
                 // Compute the probability of the data point given each
                 // component using the sufficient statistics.
-                val likelihood = DenseVectorRow[Double](components.map(dataLikelihood).toArray)
+                val likelihood = DenseVector[Double](components.map(dataLikelihood).toArray)
                 val probs = norm(prior :* likelihood)
 
                 // Combine the two probabilities into a single distribution and
@@ -124,9 +125,11 @@ class InfiniteSphericalGaussianMixtureModel(val numIterations: Int,
         labels.toArray
     }
 
-    def updateComponent(theta: Theta, x: VectorRow[Double], delta: Double) =
+    def updateComponent(theta: Theta, x: Vector[Double], delta: Double) =
         if (delta >= 0)
             (theta._1+delta, theta._2, theta._3)
         else
             (theta._1+delta, theta._2, theta._3)
+
+    def toDense(v: Vector[Double]) = DenseVector(v.valuesIterator.toArray)
 }

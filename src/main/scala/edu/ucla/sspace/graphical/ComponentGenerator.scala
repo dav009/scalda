@@ -1,13 +1,13 @@
 package edu.ucla.sspace.graphical
 
-import scalala.tensor.dense.DenseVectorRow
-import scalala.tensor.mutable.VectorRow
+import breeze.linalg.DenseVector
+import breeze.linalg.Vector
 
 
 trait ComponentGenerator {
-    def initial() : (Double, DenseVectorRow[Double], Double)
-    def initialMean() : DenseVectorRow[Double]
+    def initial() : (Double, DenseVector[Double], Double)
+    def initialMean() : DenseVector[Double]
     def initialVariance() : Double
-    def sample(data: List[VectorRow[Double]], sigma_2_old: Double) : (Double, DenseVectorRow[Double], Double)
-    def update(mu_k: Array[DenseVectorRow[Double]], variance_k: Array[Double])
+    def sample(data: List[Vector[Double]], sigma_2_old: Double) : (Double, DenseVector[Double], Double)
+    def update(mu_k: Array[DenseVector[Double]], variance_k: Array[Double])
 }
