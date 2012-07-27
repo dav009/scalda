@@ -8,7 +8,7 @@ import java.io.PrintWriter
 trait Learner {
    def train(data: List[Vector[Double]], 
              numGroups: Int,
-             priorData: List[List[Vector[Double]]]) : Array[Int]
+             priorData: List[List[Vector[Double]]] = List(List[Vector[Double]]())) : Array[Int]
 
    var dataPrinter: () => List[String] = null;
    var printer: PrintWriter = null;

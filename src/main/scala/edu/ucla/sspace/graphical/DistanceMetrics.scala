@@ -20,12 +20,14 @@ object DistanceMetrics {
 
     def euclidean(v1: Vector[Double], v2: SparseVector[Double]) : Double = {
         var v1Magnitude = pow(v1.norm(2), 2)
-        val dist = v2.mapActivePairs( (i, y) => {
+        var dist = 0d
+        v2.mapActivePairs( (i, y) => {
             val v1Val = v1(i)
             v1Magnitude -= v1Val * v1Val
             val diff = y - v1Val
-            diff * diff
-        }).sum
+            dist += diff * diff
+            dist
+        })
         sqrt(v1Magnitude + dist)
     }
 }

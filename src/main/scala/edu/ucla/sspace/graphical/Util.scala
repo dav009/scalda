@@ -11,6 +11,9 @@ import scala.math.{E,pow,abs,exp,log,max}
 object Util {
     val epsilon = 1.1920929e-07
 
+    def argmax(data: Seq[Double]) = 
+        data.zipWithIndex.max._2
+
     /*
     def logNormalize(m: DenseMatrix[Double]) = {
         val bestComponent = max(m, Horizontal)

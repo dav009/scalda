@@ -3,6 +3,7 @@ package edu.ucla.sspace.graphical
 import DistanceMetrics.euclidean
 
 import breeze.linalg.DenseVector
+import breeze.linalg.NormCacheVector
 import breeze.linalg.Vector
 import breeze.stats.distributions.Gamma
 
@@ -37,7 +38,7 @@ class SphericalGaussianRasmussen(val mu_0: DenseVector[Double],
         val beta_prior = beta + data.size
         val omega_prior = beta_prior/(omega*beta + data.size*computeVariance(data, mu))
         val sigma_2 = 1/sampleGamma(beta_prior, omega_prior)
-        (data.size.toDouble, mu, sigma_2)
+        (data.size.toDouble, new DenseVector(mu.data) with NormCacheVector[Double], sigma_2)
     }
 
     def update(mu_k: Array[DenseVector[Double]], variance_k: Array[Double]) {
